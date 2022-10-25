@@ -6,9 +6,9 @@ node_modules
 *.dmp
 bin/win32/winuae.ini
 bin/dh0/runme.exe
-bin/*/*.uae
-bin/*/*.fs-uae
-bin/*/*.uss
+bin/**/*.uae
+bin/**/*.fs-uae
+bin/**/*.uss
 bin/configuration.*
 bin/dh0/s/startup-sequence
 bin/*.ini
@@ -35,3 +35,4 @@ profile
 /output/
 
 .DS_Store
+/ci

@@ -2,6 +2,7 @@ import * as childProcess from 'child_process';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
+import { Section } from 'src/symbols';
 import * as util from 'util';
 import { GetJump, JumpType } from '../client/68k';
 import { print_insn_m68k } from '../client/68k-dis';
@@ -23,6 +24,10 @@ function getCallFrameKey(callFrame: CallFrame): string {
 	return key;
 }
 
+function getTextSection(sections: Section[]): Section {
+	return sections.find((section) => section.name === '.text' || section.flags.includes('CODE'));
+}
+
 export class SourceMap {
 	public uniqueLines: CallFrame[] = [];
 	public lines: number[] = []; // index into uniqueLines
@@ -30,7 +35,7 @@ export class SourceMap {
 	public codeSize: number;
 
 	constructor(private addr2linePath: string, private executable: string, private symbols: SymbolTable) {
-		const textSection = symbols.sections.find((section) => section.name === '.text');
+		const textSection = getTextSection(symbols.sections);
 		this.codeStart = textSection.vma;
 		this.codeSize = textSection.size;
 		let str = "";
@@ -111,7 +116,7 @@ export class UnwindTable {
 	public codeSize: number;
 
 	constructor(private objdumpPath: string, private elfPath: string, private symbols: SymbolTable) {
-		const textSection = symbols.sections.find((section) => section.name === '.text');
+		const textSection = getTextSection(symbols.sections);
 		this.codeSize = textSection.size;
 		const invalidUnwind: Unwind = {
 			cfaOfs: -1,
@@ -753,12 +758,13 @@ export class Profiler {
 
 		const sizePerFunction: number[] = [];
 		const locations: CallFrame[] = [];
+		const textSection = getTextSection(this.symbolTable.sections);
 
 		for (const section of this.symbolTable.sections) {
 			if (!section.flags.includes('LOAD'))
 				continue;
 
-			if (section.name === '.text') {
+			if (section === textSection) {
 				for (const line of this.sourceMap.lines) {
 					const l = this.sourceMap.uniqueLines[line];
 					const callstack: CallFrame = { frames: [] };
@@ -770,7 +776,7 @@ export class Profiler {
 
 					// section node
 					callstack.frames.unshift({
-						func: ".text",
+						func: section.name,
 						file: '',
 						line: 0
 					});
@@ -805,7 +811,7 @@ export class Profiler {
 		}
 
 		// for unknown symbols, try to infer usage from relocations
-		const objdump = childProcess.spawnSync(objdumpPath, ['--reloc', '--section=.text', elfPath], { maxBuffer: 10 * 1024 * 1024 });
+		const objdump = childProcess.spawnSync(objdumpPath, ['--reloc', '--section=' + textSection.name, elfPath], { maxBuffer: 10 * 1024 * 1024 });
 		if (objdump.status !== 0)
 			throw objdump.error;
 		const outputs = objdump.stdout.toString().replace(/\r/g, '').split('\n');

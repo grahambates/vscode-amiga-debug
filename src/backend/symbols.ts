@@ -97,7 +97,7 @@ export class SymbolTable {
 
 				const sectionName = match[9].trim();
 				const section = this.sections.find((s) => s.name === sectionName);
-				if(sectionName !== "*ABS*" && section === undefined)
+				if(sectionName !== "*ABS*" && sectionName !== "*UND*" && section === undefined)
 					throw new Error(`Section ${sectionName} not found. Symbol: ${name}`);
 
 				this.symbols.push({
