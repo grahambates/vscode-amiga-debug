@@ -24,24 +24,19 @@ function getCallFrameKey(callFrame: CallFrame): string {
 	return key;
 }
 
-function getTextSection(sections: Section[]): Section {
-	return sections.find((section) => section.name === '.text' || section.flags.includes('CODE'));
-}
-
 export class SourceMap {
 	public uniqueLines: CallFrame[] = [];
 	public lines: number[] = []; // index into uniqueLines
-	public codeStart: number;
-	public codeSize: number;
 
 	constructor(private addr2linePath: string, private executable: string, private symbols: SymbolTable) {
-		const textSection = getTextSection(symbols.sections);
-		this.codeStart = textSection.vma;
-		this.codeSize = textSection.size;
 		let str = "";
-		for (let i = this.codeStart; i < this.codeStart + this.codeSize; i += 2) {
-			str += i.toString(16) + ' ';
-		}
+		symbols.sections
+			.filter((s) => s.flags.includes('CODE'))
+			.forEach(({ vma, size }) => {
+				for (let i = vma; i < vma + size; i += 2) {
+					str += i.toString(16) + ' ';
+				}
+			});
 		const tmp = path.join(os.tmpdir(), `amiga-sourcemap-${new Date().getTime()}`);
 		fs.writeFileSync(tmp, str);
 
@@ -116,7 +111,7 @@ export class UnwindTable {
 	public codeSize: number;
 
 	constructor(private objdumpPath: string, private elfPath: string, private symbols: SymbolTable) {
-		const textSection = getTextSection(symbols.sections);
+		const textSection = symbols.sections.find((s) => s.flags.includes('CODE'));
 		this.codeSize = textSection.size;
 		const invalidUnwind: Unwind = {
 			cfaOfs: -1,
@@ -598,8 +593,8 @@ export class Profiler {
 	public async profileTimeSplit(path: string, profileFile: ProfileFile, disassembly: string, callback: (curFrame: number, numFrames: number) => void) {
 		const frames = this.profileTimeInternal(profileFile, disassembly);
 		const screenshots = frames.map((frame) => frame.screenshot);
-		frames.forEach((frame) => { 
-			frame.screenshot = undefined; 
+		frames.forEach((frame) => {
+			frame.screenshot = undefined;
 		});
 		const out: IAmigaProfileSplit = {
 			$id: 'IAmigaProfileSplit',
@@ -637,7 +632,7 @@ export class Profiler {
 		// filter symbols
 		const sections = this.symbolTable.sections.filter((section) => section.flags.find((f) => f === "ALLOC"));
 		const symbols = this.symbolTable.symbols.filter((symbol) => symbol.size > 0 && sections.find((section) => symbol.section === section.name));
-		
+
 		// store memory only for first frame, will later be reconstructed via dmaRecords for other frames
 		out[0].$base = {
 			chipMem: Buffer.from(profileFile.chipMem).toString('base64'),
@@ -645,7 +640,7 @@ export class Profiler {
 			objdump: disassembly + this.disassemblePcTrace(profileFile, kickTrace, kickFunctions),
 			baseClock: profileFile.baseClock,
 			cpuCycleUnit: profileFile.cpuCycleUnit,
-			symbols, 
+			symbols,
 			sections,
 			systemStackLower: profileFile.systemStackLower,
 			systemStackUpper: profileFile.systemStackUpper,
@@ -772,13 +767,12 @@ export class Profiler {
 
 		const sizePerFunction: number[] = [];
 		const locations: CallFrame[] = [];
-		const textSection = getTextSection(this.symbolTable.sections);
 
 		for (const section of this.symbolTable.sections) {
 			if (!section.flags.includes('LOAD'))
 				continue;
 
-			if (section === textSection) {
+			if (section.flags.includes('CODE')) {
 				for (const line of this.sourceMap.lines) {
 					const l = this.sourceMap.uniqueLines[line];
 					const callstack: CallFrame = { frames: [] };
@@ -825,51 +819,55 @@ export class Profiler {
 		}
 
 		// for unknown symbols, try to infer usage from relocations
-		const objdump = childProcess.spawnSync(objdumpPath, ['--reloc', '--section=' + textSection.name, elfPath], { maxBuffer: 10 * 1024 * 1024 });
-		if (objdump.status !== 0)
-			throw objdump.error;
-		const outputs = objdump.stdout.toString().replace(/\r/g, '').split('\n');
-		for (const line of outputs) {
-			// 00000006 R_68K_32          __preinit_array_end
-			// 0000022c R_68K_32          .rodata+0x00000112
-			const match = line.match(/^([0-9a-f]{8})\s\S+\s+(\..+)$/);
-			if (match) {
-				const addr = parseInt(match[1], 16);
-				let section = match[2];
-				let offset = 0;
-				const add = section.indexOf('+0x');
-				if (add !== -1) {
-					offset = parseInt(section.substr(add + 3), 16);
-					section = section.substr(0, add);
+		this.symbolTable.sections
+			.filter((s) => s.flags.includes('CODE'))
+			.forEach((textSection) => {
+				const objdump = childProcess.spawnSync(objdumpPath, ['--reloc', '--section=' + textSection.name, elfPath], { maxBuffer: 10 * 1024 * 1024 });
+				if (objdump.status !== 0)
+					throw objdump.error;
+				const outputs = objdump.stdout.toString().replace(/\r/g, '').split('\n');
+				for (const line of outputs) {
+					// 00000006 R_68K_32          __preinit_array_end
+					// 0000022c R_68K_32          .rodata+0x00000112
+					const match = line.match(/^([0-9a-f]{8})\s\S+\s+(\..+)$/);
+					if (match) {
+						const addr = parseInt(match[1], 16);
+						let section = match[2];
+						let offset = 0;
+						const add = section.indexOf('+0x');
+						if (add !== -1) {
+							offset = parseInt(section.substr(add + 3), 16);
+							section = section.substr(0, add);
+						}
+						// ignore relocations to known symbols
+						const sectionSymbols = sectionMap.get(section);
+						if (sectionSymbols === undefined)
+							continue;
+
+						if (sectionSymbols.find((sym) => offset >= sym.address && offset < sym.address + sym.size))
+							continue;
+
+						const sourceLine = this.sourceMap.uniqueLines[this.sourceMap.lines[addr >> 1]];
+						const sourceFrame = { ...sourceLine.frames[sourceLine.frames.length - 1] };
+						sourceFrame.func = `${section}+$${offset.toString(16)} (${sourceFrame.func})`;
+						const callstack: CallFrame = {
+							frames: [
+								{
+									func: section,
+									file: '',
+									line: 0
+								},
+								sourceFrame
+							]
+						};
+						sectionSymbols.push({
+							callstack,
+							address: offset,
+							size: 0
+						});
+					}
 				}
-				// ignore relocations to known symbols
-				const sectionSymbols = sectionMap.get(section);
-				if (sectionSymbols === undefined)
-					continue;
-
-				if (sectionSymbols.find((sym) => offset >= sym.address && offset < sym.address + sym.size))
-					continue;
-
-				const sourceLine = this.sourceMap.uniqueLines[this.sourceMap.lines[addr >> 1]];
-				const sourceFrame = { ...sourceLine.frames[sourceLine.frames.length - 1] };
-				sourceFrame.func = `${section}+$${offset.toString(16)} (${sourceFrame.func})`;
-				const callstack: CallFrame = {
-					frames: [
-						{
-							func: section,
-							file: '',
-							line: 0
-						},
-						sourceFrame
-					]
-				};
-				sectionSymbols.push({
-					callstack,
-					address: offset,
-					size: 0
-				});
-			}
-		}
+			});
 
 		for (const sectionName of sectionMap.keys()) {
 			const sectionSymbols = sectionMap.get(sectionName).sort((a, b) => a.address - b.address);
