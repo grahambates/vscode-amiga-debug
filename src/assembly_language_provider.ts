@@ -255,8 +255,16 @@ class SourceContext {
 						const rest = insnMatch[4] || '';
 						const insn = new Uint16Array(hex.length);
 						hex.forEach((h, i) => { insn[i] = parseInt(h, 16); });
-						if(lineNum !== 0)
-							this.cycles.set(lineNum, GetCycles(insn).map((c) => `${c.total}`).join('-') + 'T');
+						if(lineNum !== 0) {
+							const cycles = GetCycles(insn);
+							if (cycles) {
+								this.cycles.set(lineNum, cycles.map((c) => `${c.total}`).join('-') + 'T');
+							} else {
+								this.cycles.set(lineNum, '?');
+							}
+
+						}
+
 						lineNum = 0;
 					}
 				}
