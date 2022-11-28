@@ -38,4 +38,4 @@ dlopen=''
 dlpreopen=''
 
 # Directory that this library needs to be installed in:
-libdir='/Users/batesgw1/projects/vscode-amiga-debug/ci/gcc/output/libexec/gcc/m68k-amiga-elf/12.2.0'
+libdir='/Users/batesgw1/projects/vscode-amiga-debug/output/libexec/gcc/m68k-amiga-elf/12.2.0'

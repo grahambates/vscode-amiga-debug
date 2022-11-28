@@ -53,7 +53,7 @@ if [ x$1 != x ] ; then
   prefix=$1
   shift
 else
-  prefix=/Users/batesgw1/projects/vscode-amiga-debug/ci/gcc/output
+  prefix=/Users/batesgw1/projects/vscode-amiga-debug/output
 fi
 
 # Allow for alternate isysroot in which to find headers

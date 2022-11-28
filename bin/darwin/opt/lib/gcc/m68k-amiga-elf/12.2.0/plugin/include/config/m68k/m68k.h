@@ -733,8 +733,9 @@ __transfer_from_trampoline ()					\
 #define DWARF_FRAME_RETURN_COLUMN 24
 #define DWARF_ALT_FRAME_RETURN_COLUMN 25
 
-/* Before the prologue, the top of the frame is at 4(%sp).  */
-#define INCOMING_FRAME_SP_OFFSET 4
+/* Before the prologue, the top of the frame is at 4(%sp), except in interrupt handlers: 6(%sp)  */
+#define DEFAULT_INCOMING_FRAME_SP_OFFSET 4
+#define INCOMING_FRAME_SP_OFFSET (m68k_get_function_kind(current_function_decl) == m68k_fk_interrupt_handler ? 6 : 4)
 
 #define EPILOGUE_USES(REGNO) m68k_epilogue_uses (REGNO)
 
