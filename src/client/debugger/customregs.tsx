@@ -12,9 +12,9 @@ import { CustomReadWrite, CustomSpecial, FormatCustomRegData, Custom } from '../
 import { GetCustomRegsAfterDma, SymbolizeAddress, GetPrevCustomRegWriteTime, GetNextCustomRegWriteTime, CpuCyclesToDmaCycles, DmaCyclesToCpuCycles } from '../dma';
 import { GetCustomRegDoc } from '../docs';
 import { createPortal } from 'preact/compat';
-import Markdown from 'markdown-to-jsx';
 import { useWheelHack } from '../useWheelHack';
 import { Scrollable } from '../scrollable';
+import { StyledMarkdown } from '../styledMarkdown';
 
 export const CustomRegsView: FunctionComponent<{
 	frame: number;
@@ -36,11 +36,11 @@ export const CustomRegsView: FunctionComponent<{
 		if(Custom.ByIndex(index).special & CustomSpecial.pth)
 			markdown += GetCustomRegDoc((index + 1) << 1);
 		if(markdown) {
-			const hov = { 
-				markdown, 
-				x: Math.min(rect.left, window.innerWidth - 530), 
+			const hov = {
+				markdown,
+				x: Math.min(rect.left, window.innerWidth - 530),
 				y: rect.bottom < window.innerHeight - 260 ? rect.bottom + 10 : rect.top - 260,
-				justify: rect.bottom < window.innerHeight - 260 ? 'flex-start' : 'flex-end' 
+				justify: rect.bottom < window.innerHeight - 260 ? 'flex-start' : 'flex-end'
 			};
 			setHovered(hov);
 		}
@@ -48,7 +48,7 @@ export const CustomRegsView: FunctionComponent<{
 	const onMouseLeave = useCallback(() => {
 		setHovered({ markdown: '', x: -1, y: -1, justify: '' });
 	}, []);
-	const preventWheelDefault = useWheelHack(100);	
+	const preventWheelDefault = useWheelHack(100);
 	const onWheel = useCallback((evt: WheelEvent) => {
 		if(tooltipRef.current) {
 			preventWheelDefault();
@@ -72,7 +72,7 @@ export const CustomRegsView: FunctionComponent<{
 			if(newCycle !== undefined)
 				setTime(DmaCyclesToCpuCycles(newCycle));
 		}, [dmaTime, frame]);
-	
+
 		const Nav = <div class={styles.nav}>
 			<button class={styles.button} onMouseDown={navPrev} type="button" dangerouslySetInnerHTML={{__html: ChevronLeft}} />
 			<button class={styles.button} onMouseDown={navNext} type="button" dangerouslySetInnerHTML={{__html: ChevronRight}} />
@@ -97,7 +97,7 @@ export const CustomRegsView: FunctionComponent<{
 				<span class={styles.help} data={index.toString()} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onWheel={onWheel}>{regName}</span>{regPad} (${(index << 1).toString(16).padStart(3, '0')}):
 					{FormatCustomRegData(regName, customRegs[index])}
 					{regName.startsWith('COLOR') ? <span style={{marginLeft: 4, background: `#${customRegs[index].toString(16).padStart(3, '0')}`}}>&nbsp;&nbsp;</span> : ''}
-				</div>			
+				</div>
 				{Nav}
 			</div>);
 		}
@@ -118,7 +118,7 @@ export const CustomRegsView: FunctionComponent<{
 		{hovered.markdown !== '' && (createPortal(
 			<div class={styles.tooltip_parent} style={{justifyContent: hovered.justify, left: hovered.x, top: hovered.y }}>
 				<div ref={tooltipRef} class={styles.tooltip}>
-					<Markdown>{hovered.markdown}</Markdown>
+					<StyledMarkdown>{hovered.markdown}</StyledMarkdown>
 				</div>
 			</div>, document.body))}
 	</>;

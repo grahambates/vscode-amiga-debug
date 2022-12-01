@@ -2,7 +2,6 @@ import { Component, FunctionComponent, JSX } from 'preact';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import '../styles.css';
 import styles from './copper.module.css';
-import Markdown from 'markdown-to-jsx';
 
 import { IProfileModel } from '../model';
 declare const MODELS: IProfileModel[];
@@ -18,6 +17,7 @@ import { VirtualList } from '../virtual_list';
 import { useCssVariables } from '../useCssVariables';
 import { Find, FindCallback } from '../find';
 import Highlighter from 'react-highlight-words';
+import { StyledMarkdown } from '../styledMarkdown';
 class VirtualListCopper extends VirtualList<Copper> {}
 
 export const CopperView: FunctionComponent<{
@@ -38,7 +38,7 @@ export const CopperView: FunctionComponent<{
 	// find
 	const renderRowText = useCallback((c: Copper) => {
 		return `L${c.vpos.toString().padStart(3, '0')}C${c.hpos.toString().padStart(3, '0')}: $${c.address.toString(16).padStart(8, '0')}: ` + (
-			c.insn.instructionType === CopperInstructionType.MOVE 
+			c.insn.instructionType === CopperInstructionType.MOVE
 			? `${c.insn.getAsmInstruction()}; ${(c.insn as CopperMove).label} = ${FormatCustomRegData((c.insn as CopperMove).label, (c.insn as CopperMove).RD)}`
 			: c.insn.toString());
 	}, [frame]);
@@ -130,11 +130,11 @@ export const CopperView: FunctionComponent<{
 		if(copper[h].insn.instructionType === CopperInstructionType.MOVE) {
 			const markdown = GetCustomRegDoc((copper[h].insn as CopperMove).DA);
 			if(markdown) {
-				const hov = { 
-					markdown, 
-					x: Math.min(rect.left, window.innerWidth - 530), 
+				const hov = {
+					markdown,
+					x: Math.min(rect.left, window.innerWidth - 530),
 					y: rect.bottom < window.innerHeight - 260 ? rect.bottom + 10 : rect.top - 260,
-					justify: rect.bottom < window.innerHeight - 260 ? 'flex-start' : 'flex-end' 
+					justify: rect.bottom < window.innerHeight - 260 ? 'flex-start' : 'flex-end'
 				};
 				setHovered(hov);
 			}
@@ -143,7 +143,7 @@ export const CopperView: FunctionComponent<{
 	const onMouseLeave = useCallback(() => {
 		setHovered({ markdown: '', x: -1, y: -1, justify: '' });
 	}, []);
-	const preventWheelDefault = useWheelHack(100);	
+	const preventWheelDefault = useWheelHack(100);
 	const onWheel = useCallback((evt: WheelEvent) => {
 		if(tooltipRef.current) {
 			preventWheelDefault();
@@ -153,11 +153,11 @@ export const CopperView: FunctionComponent<{
 	}, [tooltipRef.current, preventWheelDefault]);
 
 	const renderRow = useCallback((c: Copper, i: number) => {
-		const text = findResult.length > 0 
+		const text = findResult.length > 0
 		? <Highlighter searchWords={[find]} autoEscape={true} highlightClassName={styles.find_hit} textToHighlight={renderRowText(c)} />
 		: <>
 			{'L' + c.vpos.toString().padStart(3, '0') + 'C' + c.hpos.toString().padStart(3, '0') + ': '}
-			{'$' + c.address.toString(16).padStart(8, '0') + ': '} 
+			{'$' + c.address.toString(16).padStart(8, '0') + ': '}
 			{c.insn.instructionType === CopperInstructionType.MOVE ? <>
 				{c.insn.getAsmInstruction()}; <span class={styles.reg} data={i.toString()} onMouseEnter={onMouseEnter} onMouseLeave={onMouseLeave} onWheel={onWheel}>{(c.insn as CopperMove).label}</span> = {FormatCustomRegData((c.insn as CopperMove).label, (c.insn as CopperMove).RD)}
 			</> : c.insn.toString()}
@@ -177,7 +177,7 @@ export const CopperView: FunctionComponent<{
 		{hovered.markdown !== '' && (createPortal(
 			<div class={styles.tooltip_parent} style={{justifyContent: hovered.justify, left: hovered.x, top: hovered.y }}>
 				<div ref={tooltipRef} class={styles.tooltip}>
-					<Markdown>{hovered.markdown}</Markdown>
+					<StyledMarkdown>{hovered.markdown}</StyledMarkdown>
 				</div>
 			</div>, document.body))}
 	</>;
