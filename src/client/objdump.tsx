@@ -395,7 +395,7 @@ export const ObjdumpView: FunctionComponent<{
 					{c.traceHits > 0 ? (integerFormat.format(c.traceCycles).padStart(7, ' ') + 'cy') : ''.padStart(9, ' ')}
 					<span class={styles.dim1}>{c.traceHits > 0 ? (integerFormat.format(c.traceHits).padStart(6) + 'x ' + integerFormat.format(c.traceCycles / c.traceHits).padStart(3, ' ') + '⌀') : ''.padStart(8 + 4, ' ')}</span>
 				</> : ''}
-				<span class={styles.dim2}>{c.theoreticalCycles ? c.theoreticalCycles.values.map((c) => c[0]).sort((a, b) => a - b).join('-').padStart(6, ' ') + 'T' : ''.padStart(7)}</span>
+				<span class={styles.dim2}>{c.theoreticalCycles ? c.theoreticalCycles.values.map((c) => c[0]).sort((a, b) => a - b).join('-').padStart(8, ' ') + 'T' : ''.padStart(9)}</span>
 			</div>
 			{text}
 			{(c.loc !== undefined && frame !== -1) ? <div class={styles.file}><a href='#' data-file={c.loc.file} data-line={c.loc.line} onClick={onClickLoc}>{c.loc.file}:{c.loc.line}</a></div> : ''}
