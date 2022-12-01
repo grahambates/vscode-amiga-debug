@@ -28,7 +28,7 @@
 	color: var(--vscode-editor-foreground);
   font-family: var(--vscode-editor-font-family);
 	font-size: var(--vscode-editor-font-size);
-	font-weight: var(--vscode-editor-font-weight);   
+	font-weight: var(--vscode-editor-font-weight);
   white-space: pre;
   flex-grow: 1;
   overflow: auto;
@@ -169,13 +169,45 @@ a:focus {
 .tooltip {
 	vertical-align: bottom;
 	max-height: 250px;
-	width: 500px;
+	width: 550px;
 	box-sizing: border-box;
 	box-shadow: 0 .25em .5em 0 black;
 	padding: 5px;
 	background: var(--vscode-editorWidget-background);
 	border: 1px solid var(--vscode-editorWidget-border);
 	overflow-y: auto;
+}
+
+.tooltip h1 {
+  font-size: 1.5em;
+  margin: 0 0 0.5em;
+}
+.tooltip h2 {
+  font-size: 1em;
+  margin: 0.5em 0 0;
+}
+.tooltip h3 {
+  font-size: 1em;
+  margin: 0.3em 0 0;
+}
+.tooltip p {
+  margin: 0 0 0.5em;
+}
+.tooltip table {
+  margin: 0.8em 0;
+  border-collapse: collapse;
+}
+.tooltip th {
+  text-align: left;
+  white-space: nowrap;
+}
+.tooltip tbody tr:nth-child(odd) {
+  background-color: var(--vscode-tree-tableOddRowsBackground);
+}
+.tooltip td,
+.tooltip th {
+  padding: 2px;
+  border: 1px solid var(--vscode-tree-tableColumnsBorder);
 }
 
 /* registers */
@@ -192,7 +224,7 @@ a:focus {
 	color: var(--vscode-editor-foreground);
   font-family: var(--vscode-editor-font-family);
 	font-size: var(--vscode-editor-font-size);
-	font-weight: var(--vscode-editor-font-weight);   
+	font-weight: var(--vscode-editor-font-weight);
   white-space: pre;
 	margin: -5px;
 }
