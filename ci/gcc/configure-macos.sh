@@ -21,6 +21,7 @@ cd build-gcc
     --disable-multilib \
     --disable-nls \
     --disable-threads \
+	--without-zstd \
     --enable-languages=c,c++ \
     --enable-lto \
     --enable-static \
