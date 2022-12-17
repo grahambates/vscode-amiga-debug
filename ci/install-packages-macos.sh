@@ -4,3 +4,4 @@ IFS=$'\n\t'
 set -x
 
 brew install autoconf bash bison gettext wget
+brew uninstall zlib
