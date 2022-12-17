@@ -18,6 +18,7 @@ cd build-binutils-gdb
     --without-guile \
     --without-expat \
     --without-zstd \
+	--without-zlib \
     --without-lzma \
     --enable-static \
     --prefix="$PREFIX" \
