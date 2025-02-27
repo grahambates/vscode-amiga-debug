@@ -513,6 +513,9 @@ export class AmigaDebugSession extends LoggingDebugSession {
 		const ssPath = path.join(dh0Path, "s/startup-sequence");
 		try {
 			let startupSequence = '';
+			startupSequence += 'IF EXISTS dh1:User-Startup\n';
+			startupSequence += '	Execute dh1:User-Startup\n';
+			startupSequence += 'EndIF\n';
 			if(args.stack !== '')
 				startupSequence += `stack ${args.stack}\n`;
 			if(args.endcli)

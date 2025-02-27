@@ -1,2 +1,5 @@
+IF EXISTS dh1:User-Startup
+	Execute dh1:User-Startup
+EndIF
 cd dh1:
 :a.exe
