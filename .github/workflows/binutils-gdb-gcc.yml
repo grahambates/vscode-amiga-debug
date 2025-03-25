@@ -35,7 +35,7 @@ jobs:
       - run: ci/gcc/install.sh
       - run: ci/clean-up.sh
       - run: ci/archive-linux.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: binutils-gdb-gcc-linux
           path: binutils-gdb-gcc-linux.tar
@@ -59,7 +59,7 @@ jobs:
       - run: ci/clean-up.sh
       - run: ci/bundle-macos.sh
       - run: ci/archive-macos.sh
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: binutils-gdb-gcc-macos
           path: binutils-gdb-gcc-macos.tar
